@@ -2,7 +2,6 @@ create database hospital_buen_dia;
 use hospital_buen_dia;
 
 
-
 -- tabla datos personales
 CREATE TABLE datospersonales (
     id  INT AUTO_INCREMENT PRIMARY KEY,
