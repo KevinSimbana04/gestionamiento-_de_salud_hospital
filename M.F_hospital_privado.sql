@@ -5,6 +5,8 @@ use hospital_buen_dia;
 -- tabla datos personales
 CREATE TABLE datospersonales (
     id  INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_idnetificacion enum('cedula', 'pasaporte', 'licencia') not null,
+    numero_indetificacion varchar(10) not null,
     nombres_completos VARCHAR(100) NOT NULL CHECK (LENGTH(nombres_completos) >= 10),
     fecha_nacimiento DATE NOT NULL,
     edad INT NOT NULL CHECK (edad >= 0),
@@ -14,7 +16,7 @@ CREATE TABLE datospersonales (
     direccion_id INT NOT NULL,
     pais_origen_id INT NOT NULL, 
     correo_electronico VARCHAR(100) UNIQUE NOT NULL CHECK (correo_electronico REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    tipo_persona ENUM('Paciente', 'Medico', 'Personal Administrativo') NOT NULL,
+    tipo_persona ENUM('Paciente', 'Medico') NOT NULL,
     CONSTRAINT fk_direccion FOREIGN KEY (direccion_id) REFERENCES direcciones(id),
     CONSTRAINT fk_pais_origen FOREIGN KEY (pais_origen_id) REFERENCES pais_origen(id)
 );
@@ -44,8 +46,8 @@ CREATE TABLE medicos (
     experiencia_years INT NOT NULL CHECK (experiencia_years >= 0),
     tipo_contrato ENUM('Permanente', 'Temporal', 'Por Servicio') NOT NULL,
     fecha_ingreso DATE NOT NULL,
-    horario_atencion VARCHAR(100),
-    salario DECIMAL(10, 2) NOT NULL CHECK (salario >= 0),
+    horario_entrada time,
+    hora_salida time,
     CONSTRAINT fk_datos_personales_medico FOREIGN KEY (datos_personales_id) REFERENCES datospersonales(id) ON DELETE CASCADE,
     CONSTRAINT fk_especialidad FOREIGN KEY (especialidad_id) REFERENCES especialidades(id)
 );
@@ -65,8 +67,6 @@ CREATE TABLE pacientes (
     alergias TEXT,
     enfermedades_preexistentes TEXT,
     medicamentos_actuales TEXT,
-    historial_medico TEXT,
-    vacunas TEXT,
     contacto_emergencia_nombre VARCHAR(100) NOT NULL,
     contacto_emergencia_telefono VARCHAR(15) NOT NULL CHECK (contacto_emergencia_telefono REGEXP '^\+593[0-9]{9}$'),
     CONSTRAINT fk_datos_personales_pacientes FOREIGN KEY (datos_personales_id) REFERENCES datospersonales(id)
@@ -78,7 +78,8 @@ CREATE TABLE citas (
     paciente_id INT NOT NULL,
     medico_id INT NOT NULL,
     fecha DATE NOT NULL,
-    hora TIME NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_finalizacion time not null,
     estado ENUM('Pendiente', 'Completada', 'Cancelada') NOT NULL,
     motivo TEXT,
     area_id INT,
