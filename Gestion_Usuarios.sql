@@ -5,6 +5,20 @@ create role personal_administrativo;
 create role farmaceuticos;
 create role tecnicos_laboratorio;
 
+
+/* Anministrador*/
+create role administrador;
+
+-- ADMINISTRADOR 
+CREATE USER 'admin_usuario'@'localhost' IDENTIFIED BY 'password_admin';
+
+-- Asignar el rol administrador
+GRANT administrador TO 'admin_usuario'@'localhost';
+
+-- Permisos para el rol administrador
+GRANT ALL PRIVILEGES ON hospital_buen_dia.* TO administrador WITH GRANT OPTION;
+
+
 -- creacion_usuario 
 -- ENFERMERA
 CREATE USER 'enfermera_usuario'@'localhost' IDENTIFIED BY 'password_enfermera';
