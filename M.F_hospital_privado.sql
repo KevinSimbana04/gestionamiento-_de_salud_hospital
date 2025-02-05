@@ -1,13 +1,12 @@
 create database hospital_buen_dia;
 use hospital_buen_dia;
 
-
 -- tabla datos personales
 CREATE TABLE datospersonales (
     id  INT AUTO_INCREMENT PRIMARY KEY,
     tipo_idnetificacion enum('cedula', 'pasaporte', 'licencia') not null,
     numero_indetificacion varchar(10) not null,
-    nombres_completos VARCHAR(100) NOT NULL CHECK (LENGTH(nombres_completos) >= 10),
+    nombres_completos VARCHAR(100) NOT NULL CHECK (LENGTH(nombres_completos) >= 5),
     fecha_nacimiento DATE NOT NULL,
     edad INT NOT NULL CHECK (edad >= 0),
     sexo ENUM('M','F','O') NOT NULL,
@@ -20,6 +19,7 @@ CREATE TABLE datospersonales (
     CONSTRAINT fk_direccion FOREIGN KEY (direccion_id) REFERENCES direcciones(id),
     CONSTRAINT fk_pais_origen FOREIGN KEY (pais_origen_id) REFERENCES pais_origen(id)
 );
+
 
 CREATE TABLE direcciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,6 +38,7 @@ CREATE TABLE pais_origen (
 );
 
 -- Medico
+-- Tabla medicos
 CREATE TABLE medicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     datos_personales_id INT NOT NULL,
@@ -46,20 +47,20 @@ CREATE TABLE medicos (
     experiencia_years INT NOT NULL CHECK (experiencia_years >= 0),
     tipo_contrato ENUM('Permanente', 'Temporal', 'Por Servicio') NOT NULL,
     fecha_ingreso DATE NOT NULL,
-    horario_entrada time,
-    hora_salida time,
+    horario_entrada TIME,
+    hora_salida TIME,
     CONSTRAINT fk_datos_personales_medico FOREIGN KEY (datos_personales_id) REFERENCES datospersonales(id) ON DELETE CASCADE,
     CONSTRAINT fk_especialidad FOREIGN KEY (especialidad_id) REFERENCES especialidades(id)
 );
 
--- Especialidad
+-- Tabla especialidades
 CREATE TABLE especialidades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT NOT NULL
 );
 
--- Pacientes
+-- Tabla pacientes
 CREATE TABLE pacientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     datos_personales_id INT NOT NULL,
@@ -68,39 +69,47 @@ CREATE TABLE pacientes (
     enfermedades_preexistentes TEXT,
     medicamentos_actuales TEXT,
     contacto_emergencia_nombre VARCHAR(100) NOT NULL,
-    contacto_emergencia_telefono VARCHAR(15) NOT NULL CHECK (contacto_emergencia_telefono REGEXP '^\+593[0-9]{9}$'),
+    contacto_emergencia_telefono VARCHAR(13) NOT NULL CHECK (contacto_emergencia_telefono REGEXP '^\+593[0-9]{9}$'),
     CONSTRAINT fk_datos_personales_pacientes FOREIGN KEY (datos_personales_id) REFERENCES datospersonales(id)
 );
 
--- Citas
+-- Tabla citas
 CREATE TABLE citas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NOT NULL,
     medico_id INT NOT NULL,
     fecha DATE NOT NULL,
     hora_inicio TIME NOT NULL,
-    hora_finalizacion time not null,
+    hora_finalizacion TIME NOT NULL,
     estado ENUM('Pendiente', 'Completada', 'Cancelada') NOT NULL,
     motivo TEXT,
     area_id INT,
     CONSTRAINT fk_paciente_cita FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
     CONSTRAINT fk_medico_cita FOREIGN KEY (medico_id) REFERENCES medicos(id) ON DELETE CASCADE,
-    CONSTRAINT fk_seccion_cita FOREIGN KEY (area_id) REFERENCES areas(id)
+    CONSTRAINT fk_area_cita FOREIGN KEY (area_id) REFERENCES areas(id)
 );
 
--- Historial Médico
+-- Historial medico
 CREATE TABLE historialmedico (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cita_id INT NOT NULL,
     paciente_id INT NOT NULL,
     descripcion TEXT NOT NULL,
+    diagnostico TEXT NOT NULL,
+    tratamiento_recomendado TEXT,
+    medicamentos_recetados TEXT,
+    procedimientos_realizados TEXT,
+    estado_general ENUM('Bueno', 'Regular', 'Crítico') NOT NULL,
+    resultados_examenes TEXT,
+    recomendaciones_futuras TEXT,
     fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     observaciones TEXT,
     CONSTRAINT fk_historial_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE,
     CONSTRAINT fk_historial_paciente FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 );
 
--- Area
+
+-- Tabla areas
 CREATE TABLE areas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
@@ -108,7 +117,7 @@ CREATE TABLE areas (
     num_consultorio INT NOT NULL
 );
 
--- Exámenes Médicos
+-- Tabla examenes medicos
 CREATE TABLE examenesmedicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -117,7 +126,7 @@ CREATE TABLE examenesmedicos (
     costo DECIMAL(10, 2) NOT NULL CHECK (costo >= 0)
 );
 
--- Ordenes de Exámenes
+-- Tabla ordenes de examenes
 CREATE TABLE ordenesexamenes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cita_id INT NOT NULL,
@@ -133,12 +142,12 @@ CREATE TABLE ordenesexamenes (
     CONSTRAINT fk_factura_examen FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
 );
 
--- Prescripciones Médicas
-CREATE TABLE prescripcionesMedicas (
+-- Tabla prescripciones medicas
+CREATE TABLE prescripcionesmedicas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cita_id INT NOT NULL,
     medicamento_id INT NOT NULL,
-    factura_id INT,
+    factura_id INT NOT NULL,
     cantidad INT NOT NULL CHECK (cantidad > 0),
     costo_unitario DECIMAL(10, 2) NOT NULL CHECK (costo_unitario >= 0),
     costo_total DECIMAL(10, 2) GENERATED ALWAYS AS (cantidad * costo_unitario) STORED,
@@ -149,7 +158,7 @@ CREATE TABLE prescripcionesMedicas (
     CONSTRAINT fk_factura_medicamento FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
 );
 
--- Medicamentos
+-- Tabla medicamentos
 CREATE TABLE medicamentos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -163,7 +172,7 @@ CREATE TABLE medicamentos (
     CONSTRAINT fk_medicamento_proveedor FOREIGN KEY (proveedor_id) REFERENCES proveedores(id)
 );
 
--- Proveedores
+-- Tabla proveedores
 CREATE TABLE proveedores (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -172,7 +181,7 @@ CREATE TABLE proveedores (
     direccion VARCHAR(255) NOT NULL
 );
 
--- Facturas
+-- Tabla facturas
 CREATE TABLE facturas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cita_id INT NOT NULL,
