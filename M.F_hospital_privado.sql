@@ -1,26 +1,6 @@
 create database hospital_buen_dia;
 use hospital_buen_dia;
 
--- tabla datos personales
-CREATE TABLE datospersonales (
-    id  INT AUTO_INCREMENT PRIMARY KEY,
-    tipo_idnetificacion enum('cedula', 'pasaporte', 'licencia') not null,
-    numero_indetificacion varchar(10) not null,
-    nombres_completos VARCHAR(100) NOT NULL CHECK (LENGTH(nombres_completos) >= 5),
-    fecha_nacimiento DATE NOT NULL,
-    edad INT NOT NULL CHECK (edad >= 0),
-    sexo ENUM('M','F','O') NOT NULL,
-    estado_civil VARCHAR(100),
-    telefono VARCHAR(20) NOT NULL CHECK (telefono REGEXP '^\+593[0-9]{9}$'),
-    direccion_id INT NOT NULL,
-    pais_origen_id INT NOT NULL, 
-    correo_electronico VARCHAR(100) UNIQUE NOT NULL CHECK (correo_electronico REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    tipo_persona ENUM('Paciente', 'Medico') NOT NULL,
-    CONSTRAINT fk_direccion FOREIGN KEY (direccion_id) REFERENCES direcciones(id),
-    CONSTRAINT fk_pais_origen FOREIGN KEY (pais_origen_id) REFERENCES pais_origen(id)
-);
-
-
 CREATE TABLE direcciones (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cuidad VARCHAR(50) NOT NULL,
@@ -35,6 +15,32 @@ CREATE TABLE pais_origen (
     id INT AUTO_INCREMENT PRIMARY KEY,
     pais VARCHAR(100) NOT NULL,
     nacionalidad VARCHAR(100) NOT NULL
+);
+
+-- tabla datos personales
+CREATE TABLE datospersonales (
+    id  INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_idnetificacion enum('cedula', 'pasaporte', 'licencia') not null,
+    numero_indetificacion varchar(10) not null unique,
+    nombres_completos VARCHAR(100) NOT NULL,
+    fecha_nacimiento DATE NOT NULL,
+    edad INT NOT NULL CHECK (edad >= 0),
+    sexo ENUM('M','F','O') NOT NULL,
+    estado_civil VARCHAR(100),
+    telefono VARCHAR(20) NOT NULL CHECK (telefono REGEXP '^\+593[0-9]{9}$'),
+    direccion_id INT NOT NULL,
+    pais_origen_id INT NOT NULL, 
+    correo_electronico VARCHAR(100) UNIQUE NOT NULL CHECK (correo_electronico REGEXP '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+    tipo_persona ENUM('Paciente', 'Medico') NOT NULL,
+    CONSTRAINT fk_direccion FOREIGN KEY (direccion_id) REFERENCES direcciones(id),
+    CONSTRAINT fk_pais_origen FOREIGN KEY (pais_origen_id) REFERENCES pais_origen(id)
+);
+
+-- Tabla especialidades
+CREATE TABLE especialidades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT NOT NULL
 );
 
 -- Medico
@@ -53,12 +59,6 @@ CREATE TABLE medicos (
     CONSTRAINT fk_especialidad FOREIGN KEY (especialidad_id) REFERENCES especialidades(id)
 );
 
--- Tabla especialidades
-CREATE TABLE especialidades (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT NOT NULL
-);
 
 -- Tabla pacientes
 CREATE TABLE pacientes (
@@ -71,6 +71,14 @@ CREATE TABLE pacientes (
     contacto_emergencia_nombre VARCHAR(100) NOT NULL,
     contacto_emergencia_telefono VARCHAR(13) NOT NULL CHECK (contacto_emergencia_telefono REGEXP '^\+593[0-9]{9}$'),
     CONSTRAINT fk_datos_personales_pacientes FOREIGN KEY (datos_personales_id) REFERENCES datospersonales(id)
+);
+
+-- Tabla areas
+CREATE TABLE areas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL,
+    ubicacion VARCHAR(50) NOT NULL,
+    num_consultorio INT NOT NULL
 );
 
 -- Tabla citas
@@ -109,14 +117,6 @@ CREATE TABLE historialmedico (
 );
 
 
--- Tabla areas
-CREATE TABLE areas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
-    ubicacion VARCHAR(50) NOT NULL,
-    num_consultorio INT NOT NULL
-);
-
 -- Tabla examenes medicos
 CREATE TABLE examenesmedicos (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -124,6 +124,22 @@ CREATE TABLE examenesmedicos (
     descripcion TEXT NOT NULL,
     tipo_examen ENUM('Laboratorio', 'Imagenología', 'Funcional', 'Otros') NOT NULL,
     costo DECIMAL(10, 2) NOT NULL CHECK (costo >= 0)
+);
+
+-- Tabla facturas
+CREATE TABLE facturas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    cita_id INT NOT NULL,
+    fecha_emision DATE NOT NULL,
+    subtotal DECIMAL(10, 2) NOT NULL CHECK (subtotal >= 0),
+    impuestos DECIMAL(10, 2) NOT NULL CHECK (impuestos >= 0),
+    total DECIMAL(10, 2) NOT NULL CHECK (total >= 0),
+    estado_pago ENUM('Pagada', 'Pendiente', 'Cancelada') NOT NULL,
+    metodo_pago ENUM('Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria', 'Seguro Médico') NOT NULL,
+    total_examenes DECIMAL(10, 2) DEFAULT 0 CHECK (total_examenes >= 0),
+    total_medicamentos DECIMAL(10, 2) DEFAULT 0 CHECK (total_medicamentos >= 0),
+    observaciones TEXT,
+    CONSTRAINT fk_factura_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE
 );
 
 -- Tabla ordenes de examenes
@@ -140,22 +156,6 @@ CREATE TABLE ordenesexamenes (
     CONSTRAINT fk_orden_examen_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE,
     CONSTRAINT fk_orden_examen FOREIGN KEY (examen_id) REFERENCES examenesmedicos(id),
     CONSTRAINT fk_factura_examen FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
-);
-
--- Tabla prescripciones medicas
-CREATE TABLE prescripcionesmedicas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    cita_id INT NOT NULL,
-    medicamento_id INT NOT NULL,
-    factura_id INT NOT NULL,
-    cantidad INT NOT NULL CHECK (cantidad > 0),
-    costo_unitario DECIMAL(10, 2) NOT NULL CHECK (costo_unitario >= 0),
-    costo_total DECIMAL(10, 2) GENERATED ALWAYS AS (cantidad * costo_unitario) STORED,
-    instrucciones TEXT NOT NULL,
-    estado ENUM('Pendiente', 'Entregado') NOT NULL,
-    CONSTRAINT fk_prescripcion_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE,
-    CONSTRAINT fk_prescripcion_medicamento FOREIGN KEY (medicamento_id) REFERENCES medicamentos(id),
-    CONSTRAINT fk_factura_medicamento FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
 );
 
 -- Tabla medicamentos
@@ -181,18 +181,18 @@ CREATE TABLE proveedores (
     direccion VARCHAR(255) NOT NULL
 );
 
--- Tabla facturas
-CREATE TABLE facturas (
+-- Tabla prescripciones medicas
+CREATE TABLE prescripcionesmedicas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cita_id INT NOT NULL,
-    fecha_emision DATE NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL CHECK (subtotal >= 0),
-    impuestos DECIMAL(10, 2) NOT NULL CHECK (impuestos >= 0),
-    total DECIMAL(10, 2) NOT NULL CHECK (total >= 0),
-    estado_pago ENUM('Pagada', 'Pendiente', 'Cancelada') NOT NULL,
-    metodo_pago ENUM('Efectivo', 'Tarjeta de Crédito', 'Transferencia Bancaria', 'Seguro Médico') NOT NULL,
-    total_examenes DECIMAL(10, 2) DEFAULT 0 CHECK (total_examenes >= 0),
-    total_medicamentos DECIMAL(10, 2) DEFAULT 0 CHECK (total_medicamentos >= 0),
-    observaciones TEXT,
-    CONSTRAINT fk_factura_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE
+    medicamento_id INT NOT NULL,
+    factura_id INT NOT NULL,
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    costo_unitario DECIMAL(10, 2) NOT NULL CHECK (costo_unitario >= 0),
+    costo_total DECIMAL(10, 2) GENERATED ALWAYS AS (cantidad * costo_unitario) STORED,
+    instrucciones TEXT NOT NULL,
+    estado ENUM('Pendiente', 'Entregado') NOT NULL,
+    CONSTRAINT fk_prescripcion_cita FOREIGN KEY (cita_id) REFERENCES citas(id) ON DELETE CASCADE,
+    CONSTRAINT fk_prescripcion_medicamento FOREIGN KEY (medicamento_id) REFERENCES medicamentos(id),
+    CONSTRAINT fk_factura_medicamento FOREIGN KEY (factura_id) REFERENCES facturas(id) ON DELETE CASCADE
 );
