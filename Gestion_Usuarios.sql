@@ -1,75 +1,53 @@
--- crear roles
-create role medicos;
-create role enfermeras;
-create role personal_administrativo;
-create role farmaceuticos;
-create role tecnicos_laboratorio;
+-- 1. Crear usuarios
+CREATE USER 'admin_h'@'localhost' IDENTIFIED  WITH caching_sha2_password BY 'password_admin_h';
+CREATE USER 'medico_usuario'@'localhost' IDENTIFIED  WITH caching_sha2_password BY 'password_medico';
+CREATE USER 'enfermera_usuario'@'localhost' IDENTIFIED WITH	caching_sha2_password BY 'password_enfermera';
+CREATE USER 'administrativo_usuario'@'localhost' IDENTIFIED  WITH caching_sha2_password BY 'password_administrativo';
+CREATE USER 'farmaceutico_usuario'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'password_farmaceutico';
+CREATE USER 'tecnico_laboratorio_usuario'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'password_tecnico_laboratorio';
+
+-- 2. Asignar permisos a los usuarios
+-- Permisos para el usuario  admin_h
+GRANT ALL PRIVILEGES ON hospital_buen_dia.* TO 'admin_h'@'localhost' WITH GRANT OPTION;
+
+-- Permisos para el usuario medicos
+GRANT USAGE ON hospital_buen_dia.* TO 'medico_usuario'@'localhost';
+GRANT SELECT, UPDATE ON hospital_buen_dia.pacientes TO 'medico_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.citas TO 'medico_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE ON hospital_buen_dia.historialmedico TO 'medico_usuario'@'localhost';
+
+-- Permisos para el usuario  enfermeras
+GRANT USAGE ON hospital_buen_dia.* TO 'medico_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.citas TO  'enfermera_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.historialmedico TO  'enfermera_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.pacientes TO  'enfermera_usuario'@'localhost';
+
+-- Permisos para el usuario personal_administrativo
+GRANT USAGE ON hospital_buen_dia.* TO 'administrativo_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.datospersonales TO 'administrativo_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.citas TO 'administrativo_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.medicos TO 'administrativo_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.pacientes TO 'administrativo_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.factura TO 'administrativo_usuario'@'localhost';
+
+-- Permisos para el  farmaceuticos
+GRANT USAGE ON hospital_buen_dia.* TO 'farmaceutico_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.pacientes TO 'farmaceutico_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.medicos TO 'farmaceutico_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.citas TO 'farmaceutico_usuario'@'localhost';
+GRANT SELECT, UPDATE ON hospital_buen_dia.medicamentos TO 'farmaceutico_usuario'@'localhost';
+
+-- Permisos para el usuario tecnicos_laboratorio
+GRANT USAGE ON hospital_buen_dia.* TO 'tecnico_laboratorio_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.pacientes TO 'tecnico_laboratorio_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.citas TO 'tecnico_laboratorio_usuario'@'localhost';
+GRANT SELECT ON hospital_buen_dia.medicos TO 'tecnico_laboratorio_usuario'@'localhost';
+GRANT SELECT, INSERT, UPDATE ON hospital_buen_dia.examenesmedicos TO 'tecnico_laboratorio_usuario'@'localhost';
 
 
-/* Anministrador*/
-create role administrador;
 
--- ADMINISTRADOR 
-CREATE USER 'admin_usuario'@'localhost' IDENTIFIED BY 'password_admin';
+/*Visualizacion_usuario*/
+SELECT User, Host FROM mysql.user;
 
--- Asignar el rol administrador
-GRANT administrador TO 'admin_usuario'@'localhost';
+SELECT user, host, authentication_string, plugin FROM mysql.user;
 
--- Permisos para el rol administrador
-GRANT ALL PRIVILEGES ON hospital_buen_dia.* TO administrador WITH GRANT OPTION;
-
-
--- creacion_usuario 
--- ENFERMERA
-CREATE USER 'enfermera_usuario'@'localhost' IDENTIFIED BY 'password_enfermera';
-
--- Asignar el rol enfermeras
-GRANT enfermeras TO 'enfermera_usuario'@'localhost';
-
--- PESONAL ADMINISTRATIVO
-CREATE USER 'administrativo_usuario'@'localhost' IDENTIFIED BY 'password_administrativo';
-
--- Asignar el rol personal_administrativo
-GRANT personal_administrativo TO 'administrativo_usuario'@'localhost';
-
--- FARMACEUTICO
-CREATE USER 'farmaceutico_usuario'@'localhost' IDENTIFIED BY 'password_farmaceutico';
-
--- Asignar el rol farmaceuticos
-GRANT farmaceuticos TO 'farmaceutico_usuario'@'localhost';
-
--- Asignar permisos para gestionar prescripciones y el inventario de medicamentos
-GRANT SELECT ON prescripciones TO 'farmaceutico_usuario'@'localhost';
-
--- TECNICOS_LABORATORIO
-CREATE USER 'tecnico_laboratorio_usuario'@'localhost' IDENTIFIED BY 'password_tecnico_laboratorio';
-
--- Asignar el rol tecnicos_laboratorio
-GRANT tecnicos_laboratorio TO 'tecnico_laboratorio_usuario'@'localhost';
-
-/*Prmisos*/
-
--- Permisos para el rol medicos
-GRANT SELECT ON hospital_buen_dia.datospersonales TO medicos;
-GRANT SELECT ON hospital_buen_dia.pacientes TO medicos;
-GRANT SELECT, UPDATE ON hospital_buen_dia.citas TO medicos;
-GRANT SELECT, UPDATE ON hospital_buen_dia.historial_medico TO medicos;
-
--- Permisos para el rol personal_administrativo
-GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.datosPersonales TO personal_administrativo;
-GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.citas TO personal_administrativo;
-GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.medicos TO personal_administrativo;
-GRANT SELECT, INSERT, UPDATE, DELETE ON hospital_buen_dia.pacientes TO personal_administrativo;
-
--- Permisos para el rol farmaceuticos
-GRANT SELECT ON hospital_buen_dia.pacientes TO farmaceuticos;
-GRANT SELECT ON hospital_buen_dia.medicos TO farmaceuticos;
-GRANT SELECT ON hospital_buen_dia.citas TO farmaceuticos;
-GRANT SELECT, UPDATE ON hospital_buen_dia.medicamentos TO farmaceuticos;
-
-
--- Permisos para el rol tecnicos_laboratorio
-GRANT SELECT ON  hospital_buen_dia.pacientes TO tecnicos_laboratorio;
-GRANT SELECT ON  hospital_buen_dia.citas TO tecnicos_laboratorio;
-GRANT SELECT ON hospital_buen_dia.medicos TO tecnicos_laboratorio;
-GRANT SELECT, INSERT, UPDATE ON hospital_buen_dia.eexamenes TO tecnico_laboratorio;
